@@ -1,7 +1,8 @@
 use clap::Parser;
+use geojson::{FeatureCollection, GeoJson, Geometry, Value};
 use patharg::{InputArg, OutputArg};
-use wavefront_rs::obj;
-use std::{error::Error, io::Write};
+use wavefront_rs::obj::{self, entity::Entity};
+use std::{error::Error, io::Write, str::FromStr};
 
 #[derive(Parser)]
 struct Arguments {
@@ -22,7 +23,7 @@ struct Arguments {
 fn main() -> std::io::Result<()> {
     let args = Arguments::parse();
     let mut output = args.outfile.create()?;
-    writeln!(&mut output, "{}", convert_mesh(args.infile))?;
+    writeln!(&mut output, "{:?}", convert_mesh(args.infile))?;
     Ok(())
 }
 
@@ -30,10 +31,19 @@ fn main() -> std::io::Result<()> {
  * use EPSG:2135 for UTM data
  * use EPSG:4167 nzgd2000 to convert geojson measurements to xyz
  */
-fn convert_mesh (inputfile: InputArg) -> Result<obj,&str>{
-    Err("not implemented")
-}
+fn convert_mesh (inputfile: InputArg) -> Result<Entity,String>{
+    let geojson_str = inputfile.read_to_string().expect("failed to parse geojson arg");
+    let geojson = geojson_str.parse::<GeoJson>().unwrap();
+    let feature_set = FeatureCollection::try_from(geojson).unwrap();
+    println!("feature 0: {}",feature_set.features[0].geometry.as_ref().unwrap().to_string());
+    // read property data
+    // assert_eq!("donuts", feature_set.property("food").unwrap());
 
-fn convert_pt (pt: geo::Point) -> Result< Entity::Vertex,&str>{
-    Err("not implemented")
+    // read geometry data
+    // let geometry: Geometry = feature_set.geometry.unwrap();
+    // if let Value::Point(coords) = geometry.value {
+    //     assert_eq!(coords, vec![-118.2836, 34.0956]);
+    // }
+
+    Err(String::from("not implemented"))
 }

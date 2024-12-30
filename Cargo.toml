@@ -6,6 +6,6 @@ edition = "2021"
 [dependencies]
 clap = { version = "4.5.23", features = ["derive"] }
 geo = "0.29.3"
+geojson = "0.24.1"
 patharg = "0.4.0"
-proj = "0.28.0"
 wavefront_rs = "1.0.4"
