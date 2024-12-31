@@ -1,3 +1,3 @@
 # GNSS to MESH
 
-Convert GNSS features from a survey as geojson document and build a mesh into different cad compatible formats
+Convert GNSS features from a survey as shapefile document and build a mesh into waveform obj cad compatible format

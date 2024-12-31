@@ -1,5 +1,5 @@
 use clap::Parser;
-use geojson::{FeatureCollection, GeoJson, Geometry, Value};
+use geo::{Coord, CoordinatePosition, Point};
 use patharg::{InputArg, OutputArg};
 use wavefront_rs::obj::{self, entity::Entity};
 use std::{error::Error, io::Write, str::FromStr};
@@ -32,18 +32,23 @@ fn main() -> std::io::Result<()> {
  * use EPSG:4167 nzgd2000 to convert geojson measurements to xyz
  */
 fn convert_mesh (inputfile: InputArg) -> Result<Entity,String>{
-    let geojson_str = inputfile.read_to_string().expect("failed to parse geojson arg");
-    let geojson = geojson_str.parse::<GeoJson>().unwrap();
-    let feature_set = FeatureCollection::try_from(geojson).unwrap();
-    println!("feature 0: {}",feature_set.features[0].geometry.as_ref().unwrap().to_string());
-    // read property data
-    // assert_eq!("donuts", feature_set.property("food").unwrap());
-
-    // read geometry data
-    // let geometry: Geometry = feature_set.geometry.unwrap();
-    // if let Value::Point(coords) = geometry.value {
-    //     assert_eq!(coords, vec![-118.2836, 34.0956]);
+    let mut reader = shapefile::Reader::from_path(inputfile.into_path().expect("input path failed")).expect("failed to create reader");
+    for shape_record in reader.iter_shapes_and_records() {
+        let (shape, record) = shape_record.expect("failed to make record");
+        println!("{}", shape);
+    }
+    
+    // create a mutable wavefront entity
+    let mut wavefront_ent = wavefront_rs::obj::entity::Entity::Object { name: ("landscape".to_string()) };
+    //fetch feature 0
+    //let feat_zero = feature_set.features[0].geometry.clone().unwrap(); 
+    //foreach feature
+    // for feature in feature_set.features {
+    //     let point: Point<f64> = geo_types::Point::try_from(feature.geometry.unwrap().clone()).unwrap();
     // }
-
+    //  apply geodesic distance between this point and feature 0
+    //  save to a new vertex in mutable wavefront entity
+    
+    //return entity or a copy of entity
     Err(String::from("not implemented"))
 }
