@@ -1,7 +1,13 @@
 use clap::Parser;
 use geo::{Coord, CoordinatePosition, Point};
 use patharg::{InputArg, OutputArg};
+use shapefile::record::EsriShape;
+use shapefile::Shape;
+use shapefile::PointZ;
+use wavefront_rs::obj::entity::Entity::Vertex;
 use wavefront_rs::obj::{self, entity::Entity};
+use std::borrow::Borrow;
+use std::fmt::Debug;
 use std::{error::Error, io::Write, str::FromStr};
 
 #[derive(Parser)]
@@ -30,25 +36,31 @@ fn main() -> std::io::Result<()> {
 /**
  * use EPSG:2135 for UTM data
  * use EPSG:4167 nzgd2000 to convert geojson measurements to xyz
+ * fetch feature 0
+ * let feat_zero = feature_set.features[0].geometry.clone().unwrap(); 
+ * foreach feature
+ *  for feature in feature_set.features {
+ *      let point: Point<f64> = geo_types::Point::try_from(feature.geometry.unwrap().clone()).unwrap();
+ *  }
+ *   apply geodesic distance between this point and feature 0
+ *   save to a new vertex in mutable wavefront entity
+ * return entity or a copy of entity
  */
 fn convert_mesh (inputfile: InputArg) -> Result<Entity,String>{
+    // create a mutable wavefront entity collection
+    let mut wavefront_ent = Vec::new();
     let mut reader = shapefile::Reader::from_path(inputfile.into_path().expect("input path failed")).expect("failed to create reader");
-    for shape_record in reader.iter_shapes_and_records() {
-        let (shape, record) = shape_record.expect("failed to make record");
-        println!("{}", shape);
+    let mut readervec = reader.iter_shapes_and_records();
+    let (shape_zero, record_zero) = readervec.nth(0).unwrap().expect("failed to make shape");
+    let point_zero = shapefile::PointZ::try_from(shape_zero).expect("failed to convert to pointZ");
+    for shape_record in  readervec{
+        let (shape, record) = shape_record.expect("failed to make shape record");
+        println!("shape: {}", shape);
+        let pointy = shapefile::PointZ::try_from(shape).expect("cannot convert to pointZ");
+        let vert = Vertex{x: point_zero.x-pointy.x,y: point_zero.y-pointy.y,z:point_zero.z-pointy.z,w: None};
+        println!("vert: {}",vert.to_string());
+        wavefront_ent.push(vert);
     }
-    
-    // create a mutable wavefront entity
-    let mut wavefront_ent = wavefront_rs::obj::entity::Entity::Object { name: ("landscape".to_string()) };
-    //fetch feature 0
-    //let feat_zero = feature_set.features[0].geometry.clone().unwrap(); 
-    //foreach feature
-    // for feature in feature_set.features {
-    //     let point: Point<f64> = geo_types::Point::try_from(feature.geometry.unwrap().clone()).unwrap();
-    // }
-    //  apply geodesic distance between this point and feature 0
-    //  save to a new vertex in mutable wavefront entity
-    
-    //return entity or a copy of entity
+
     Err(String::from("not implemented"))
 }
