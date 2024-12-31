@@ -1,8 +1,9 @@
 use clap::Parser;
+use geo::{line_measures, Distance};
 use geo::{Coord, CoordinatePosition, Point};
 use patharg::{InputArg, OutputArg};
 use shapefile::record::EsriShape;
-use shapefile::Shape;
+use shapefile::{Shape, NO_DATA};
 use shapefile::PointZ;
 use wavefront_rs::obj::entity::Entity::Vertex;
 use wavefront_rs::obj::{self, entity::Entity};
@@ -57,10 +58,21 @@ fn convert_mesh (inputfile: InputArg) -> Result<Entity,String>{
         let (shape, record) = shape_record.expect("failed to make shape record");
         println!("shape: {}", shape);
         let pointy = shapefile::PointZ::try_from(shape).expect("cannot convert to pointZ");
-        let vert = Vertex{x: point_zero.x-pointy.x,y: point_zero.y-pointy.y,z:point_zero.z-pointy.z,w: None};
+        let delta_point = distance_calculation(point_zero, pointy);
+        let vert = Vertex{x: delta_point.x, y: delta_point.y, z:delta_point.z,w: None};
         println!("vert: {}",vert.to_string());
         wavefront_ent.push(vert);
     }
 
     Err(String::from("not implemented"))
+}
+/**
+ * calculate component distances from pt1 to pt2 from lon,lat (hopefully into meters?)
+ */
+fn distance_calculation(pt1: PointZ, pt2: PointZ) -> PointZ{
+    //x = measure((pt1.x, pt1.y, pt1.z) (pt2.x, pt1.y, pt1.z))
+    let x = line_measures::Geodesic::distance(Point::new(pt1.x, pt1.y), Point::new(pt2.x, pt1.y));
+    let y = line_measures::Geodesic::distance(Point::new(pt1.x, pt1.y), Point::new(pt1.x, pt2.y));
+    let z = pt2.z - pt1.z;
+    return PointZ::new(x, y,z,NO_DATA);
 }
